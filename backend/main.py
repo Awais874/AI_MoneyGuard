@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routers import auth
 from routers import transactions
+from routers import analytics
 from utils.auth_utils import get_current_user
 from models.user import User
 
@@ -20,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(transactions.router, prefix="/api/transactions", tags=["Transactions"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 
 @app.get("/")
 def root():
