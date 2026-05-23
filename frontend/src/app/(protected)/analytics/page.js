@@ -48,7 +48,7 @@ export default function Analytics() {
     <div>
       <h2 className="text-3xl font-bold mb-8">Analytics</h2>
 
-      {/* Summary Cards */}
+      
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-gray-700 p-6 rounded-xl text-center">
           <p className="text-gray-400 mb-1">Total Amount</p>
@@ -64,10 +64,9 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Charts Row */}
+    
       <div className="grid grid-cols-2 gap-6">
 
-        {/* Pie Chart */}
         <div className="bg-gray-700 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4">Fraud vs Clean</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -90,7 +89,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        {/* Line Chart */}
+        
         <div className="bg-gray-700 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4">Transactions Over Time</h2>
           <ResponsiveContainer width="100%" height={300}>

@@ -21,8 +21,8 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-800 text-white">
-      <div className="bg-gray-700 p-8 rounded-xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-500 text-white">
+      <div className="bg-black-1000 p-8 rounded-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6">Register</h2>
         {error && <p className="text-red-400 mb-4">{error}</p>}
         <input
