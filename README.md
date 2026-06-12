@@ -1,5 +1,5 @@
- AI-MoneyGuard
-Full Stack AI-Powered Fraud Detection Platform
+ @AI-MoneyGuard
+#Full Stack AI-Powered Fraud Detection Platform
 AI-MoneyGuard is a full-stack AI-powered fraud detection platform built with Next.js, FastAPI, and PostgreSQL. It uses a Random Forest machine learning model trained on 6.3 million real financial transactions from the PaySim dataset, achieving 88% fraud recall. The backend is built with Python FastAPI featuring JWT authentication, SQLAlchemy ORM, and Pandas analytics API. The frontend is built with Next.js 16 and Tailwind CSS, featuring a real-time transaction dashboard, fraud/clean badges, and interactive charts with Recharts. The project covers the full stack — authentication, REST API, database, machine learning, and a modern responsive UI.
 
 🖥️ Frontend — Next.js + Tailwind CSS
