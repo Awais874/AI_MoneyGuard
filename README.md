@@ -1,8 +1,10 @@
- **AI-MoneyGuard**
-**Full Stack AI-Powered Fraud Detection Platform**
+# AI-MoneyGuard
+
+ 
+## **Full Stack AI-Powered Fraud Detection Platform**
 AI-MoneyGuard is a full-stack AI-powered fraud detection platform built with Next.js, FastAPI, and PostgreSQL. It uses a Random Forest machine learning model trained on 6.3 million real financial transactions from the PaySim dataset, achieving 88% fraud recall. The backend is built with Python FastAPI featuring JWT authentication, SQLAlchemy ORM, and Pandas analytics API. The frontend is built with Next.js 16 and Tailwind CSS, featuring a real-time transaction dashboard, fraud/clean badges, and interactive charts with Recharts. The project covers the full stack — authentication, REST API, database, machine learning, and a modern responsive UI.
 
-**🖥️ Frontend — Next.js + Tailwind CSS**
+ ### **🖥️ Frontend — Next.js + Tailwind CSS**
 Next.js 16  ·  Tailwind CSS  ·  Recharts  ·  Axios  ·  App Router
 •	Login & Register pages with JWT token handling
 •	Protected dashboard with persistent sidebar layout
@@ -11,7 +13,7 @@ Next.js 16  ·  Tailwind CSS  ·  Recharts  ·  Axios  ·  App Router
 •	Shared layout using Next.js Route Groups (protected)
 •	Fully responsive dark theme UI
 ________________________________________
-**⚙️ Backend — FastAPI + Python + PostgreSQL**
+### **⚙️ Backend — FastAPI + Python + PostgreSQL**
 FastAPI  ·  SQLAlchemy  ·  PostgreSQL 17  ·  JWT  ·  bcrypt  ·  Pydantic
 •	REST API with auto docs at /docs
 •	JWT authentication with bcrypt password hashing
@@ -20,7 +22,7 @@ FastAPI  ·  SQLAlchemy  ·  PostgreSQL 17  ·  JWT  ·  bcrypt  ·  Pydantic
 •	Pandas-powered analytics API
 •	ML model integration via joblib
 ________________________________________
-**🤖 Machine Learning — Random Forest**
+### **🤖 Machine Learning — Random Forest**
 scikit-learn  ·  Pandas  ·  joblib  ·  PaySim Dataset  ·  6.3M transactions
 Metric	Value
 Algorithm	Random Forest (100 trees)
