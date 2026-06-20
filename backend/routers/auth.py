@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 from schemas.user_schema import RegisterSchema, LoginSchema, TokenSchema, UserResponseSchema
+from utils.auth_utils import get_current_user
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
@@ -54,3 +55,8 @@ def login(data: LoginSchema, db: Session = Depends(get_db)):
 
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=UserResponseSchema)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user

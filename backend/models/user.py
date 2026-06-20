@@ -10,6 +10,7 @@ class User(Base):
     username = Column(String(80), nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default="user")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     transactions = relationship("Transaction", back_populates="user")
