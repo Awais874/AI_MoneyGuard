@@ -5,15 +5,18 @@ import { useRouter, usePathname } from 'next/navigation'
 export default function Sidebar() {
   const router = useRouter()
   const pathname = usePathname()
+  const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null
 
   function handleLogout() {
     localStorage.removeItem('token')
+    localStorage.removeItem('role')
     router.push('/login')
   }
 
   const links = [
     { href: '/dashboard', label: '🏠 Dashboard' },
     { href: '/analytics', label: '📊 Analytics' },
+    ...(role === 'admin' ? [{ href: '/admin', label: '🛡️ Admin Panel' }] : []),
   ]
 
   return (

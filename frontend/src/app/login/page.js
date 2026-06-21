@@ -13,7 +13,10 @@ export default function Login() {
   async function handleLogin() {
     try {
       const res = await api.post('/api/auth/login', { email, password })
-      localStorage.setItem('token', res.data.access_token)
+      const token = res.data.access_token
+      localStorage.setItem('token', token)
+      const me = await api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      localStorage.setItem('role', me.data.role)
       router.push('/dashboard')
     } catch (err) {
       setError('Invalid email or password')
