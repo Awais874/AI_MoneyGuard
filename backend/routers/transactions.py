@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.transaction import Transaction
 from schemas.transaction_schema import TransactionCreateSchema, TransactionResponseSchema
-from utils.auth_utils import get_current_user
+from utils.auth_utils import get_current_user, require_role
 from models.user import User
 from typing import List
 import joblib
@@ -72,6 +72,11 @@ def create_transaction(data: TransactionCreateSchema, db: Session = Depends(get_
 def get_transactions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
     return transactions
+
+
+@router.get("/all", response_model=List[TransactionResponseSchema])
+def get_all_transactions(db: Session = Depends(get_db), _: User = Depends(require_role("admin"))):
+    return db.query(Transaction).all()
 
 
 @router.delete("/{transaction_id}", status_code=204)
