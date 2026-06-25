@@ -21,3 +21,7 @@ class UserResponseSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UpdateRoleSchema(BaseModel):
+    role: str

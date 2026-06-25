@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
-from schemas.user_schema import RegisterSchema, LoginSchema, TokenSchema, UserResponseSchema
-from utils.auth_utils import get_current_user
+from schemas.user_schema import RegisterSchema, LoginSchema, TokenSchema, UserResponseSchema, UpdateRoleSchema
+from utils.auth_utils import get_current_user, require_role
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
@@ -60,3 +61,22 @@ def login(data: LoginSchema, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponseSchema)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/admin/users", response_model=List[UserResponseSchema])
+def get_all_users(db: Session = Depends(get_db), _: User = Depends(require_role("admin"))):
+    return db.query(User).all()
+
+
+@router.patch("/admin/users/{user_id}/role", response_model=UserResponseSchema)
+def update_user_role(user_id: int, data: UpdateRoleSchema, db: Session = Depends(get_db), _: User = Depends(require_role("admin"))):
+    allowed_roles = ["user", "analyst", "compliance_officer", "admin"]
+    if data.role not in allowed_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Choose from: {allowed_roles}")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = data.role
+    db.commit()
+    db.refresh(user)
+    return user

@@ -7,6 +7,7 @@ export default function AdminPanel() {
   const router = useRouter()
   const [transactions, setTransactions] = useState([])
   const [summary, setSummary] = useState(null)
+  const [users, setUsers] = useState([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -22,14 +23,29 @@ export default function AdminPanel() {
   async function fetchAdminData(token) {
     try {
       const headers = { Authorization: `Bearer ${token}` }
-      const [txRes, summaryRes] = await Promise.all([
+      const [txRes, summaryRes, usersRes] = await Promise.all([
         api.get('/api/transactions/all', { headers }),
         api.get('/api/analytics/admin/summary', { headers }),
+        api.get('/api/auth/admin/users', { headers }),
       ])
       setTransactions(txRes.data)
       setSummary(summaryRes.data)
+      setUsers(usersRes.data)
     } catch (err) {
       setError('Access denied or failed to load data')
+    }
+  }
+
+  async function handleRoleChange(userId, newRole) {
+    const token = localStorage.getItem('token')
+    try {
+      await api.patch(`/api/auth/admin/users/${userId}/role`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u))
+    } catch (err) {
+      setError('Failed to update role')
     }
   }
 
@@ -53,6 +69,41 @@ export default function AdminPanel() {
           <p className="text-gray-200 mb-1">Fraud</p>
           <p className="text-3xl font-bold">{summary.fraud}</p>
         </div>
+      </div>
+
+      <div className="bg-gray-700 rounded-xl p-6 mb-8">
+        <h3 className="text-xl font-semibold mb-4">User Management</h3>
+        <table className="w-full text-left">
+          <thead>
+            <tr className="text-gray-400 border-b border-gray-600">
+              <th className="pb-3">ID</th>
+              <th className="pb-3">Username</th>
+              <th className="pb-3">Email</th>
+              <th className="pb-3">Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id} className="border-b border-gray-600 hover:bg-gray-600">
+                <td className="py-3">{u.id}</td>
+                <td className="py-3">{u.username}</td>
+                <td className="py-3">{u.email}</td>
+                <td className="py-3">
+                  <select
+                    value={u.role}
+                    onChange={e => handleRoleChange(u.id, e.target.value)}
+                    className="bg-gray-800 text-white p-2 rounded-lg outline-none"
+                  >
+                    <option value="user">user</option>
+                    <option value="analyst">analyst</option>
+                    <option value="compliance_officer">compliance_officer</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="bg-gray-700 rounded-xl p-6">
