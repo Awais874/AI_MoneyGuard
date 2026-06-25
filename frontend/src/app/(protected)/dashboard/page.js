@@ -9,6 +9,8 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('transfer')
+  const [explanation, setExplanation] = useState(null)
+  const [loadingExplain, setLoadingExplain] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -41,6 +43,22 @@ export default function Dashboard() {
       fetchTransactions(token)
     } catch (err) {
       setError('Failed to add transaction')
+    }
+  }
+
+  async function handleExplain(txId) {
+    const token = localStorage.getItem('token')
+    setLoadingExplain(true)
+    setExplanation(null)
+    try {
+      const res = await api.get(`/api/transactions/${txId}/explain`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setExplanation(res.data)
+    } catch (err) {
+      setError('Failed to load explanation')
+    } finally {
+      setLoadingExplain(false)
     }
   }
 
@@ -129,6 +147,14 @@ export default function Dashboard() {
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${tx.is_fraud ? 'bg-red-500' : 'bg-green-500'}`}>
                     {tx.is_fraud ? 'Fraud' : 'Clean'}
                   </span>
+                  {tx.is_fraud && (
+                    <button
+                      onClick={() => handleExplain(tx.id)}
+                      className="ml-2 text-xs text-yellow-400 hover:text-yellow-300 underline"
+                    >
+                      Why?
+                    </button>
+                  )}
                 </td>
                 <td className="py-3">{new Date(tx.created_at).toLocaleDateString()}</td>
               </tr>
@@ -137,6 +163,41 @@ export default function Dashboard() {
         </table>
         {transactions.length === 0 && <p className="text-gray-400 text-center mt-4">No transactions yet.</p>}
       </div>
+
+      {loadingExplain && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <p className="text-white text-lg">Analyzing transaction...</p>
+        </div>
+      )}
+
+      {explanation && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-xl p-8 w-full max-w-lg">
+            <h3 className="text-xl font-bold mb-2">Why was this flagged?</h3>
+            <p className="text-gray-400 mb-1">Transaction #{explanation.transaction_id} — ${explanation.amount.toLocaleString()} ({explanation.transaction_type})</p>
+            <p className="text-red-400 font-semibold mb-6">Fraud Probability: {(explanation.fraud_probability * 100).toFixed(0)}%</p>
+
+            <div className="flex flex-col gap-4 mb-6">
+              {explanation.reasons.map((r, i) => (
+                <div key={i} className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-yellow-400 font-semibold text-sm">{r.feature}</span>
+                    <span className="text-gray-400 text-sm">Impact: {(r.importance * 100).toFixed(1)}%</span>
+                  </div>
+                  <p className="text-gray-200 text-sm">{r.explanation}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setExplanation(null)}
+              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-2 rounded-lg font-semibold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
