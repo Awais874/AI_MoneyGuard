@@ -26,35 +26,49 @@ TYPE_MAP = {
 }
 
 
+def build_features(amount: float, type_encoded: int):
+    import pandas as pd
+    sender_balance = max(amount * 10, 50000.0)
+    return pd.DataFrame([[
+        amount,
+        type_encoded,
+        sender_balance,
+        sender_balance - amount,
+        0.0,
+        amount,
+    ]], columns=['amount', 'type_encoded', 'oldbalanceOrg', 'newbalanceOrig', 'oldbalanceDest', 'newbalanceDest'])
+
+
 def predict_fraud(amount: float, transaction_type: str) -> bool:
     mapped_type = TYPE_MAP.get(transaction_type.lower(), 'PAYMENT')
-    
     if mapped_type not in ['TRANSFER', 'CASH_OUT']:
         return False
-    
     try:
         type_encoded = label_encoder.transform([mapped_type])[0]
     except:
         return False
-
-    import pandas as pd
-    features = pd.DataFrame([[
-        amount,         # amount
-        type_encoded,   # type
-        amount,         # oldbalanceOrg — had exactly this amount
-        0.0,            # newbalanceOrig — now completely drained
-        0.0,            # oldbalanceDest — destination was empty
-        0.0             # newbalanceDest — money disappeared!
-    ]], columns=['amount', 'type_encoded', 'oldbalanceOrg', 'newbalanceOrig', 'oldbalanceDest', 'newbalanceDest'])
-    
+    features = build_features(amount, type_encoded)
     proba = model.predict_proba(features)[0][1]
-    print(f"Fraud probability: {proba}")
-    return bool(proba > 0.3)
+    print(f"Fraud probability: {proba:.4f}")
+    return bool(proba > 0.5)
 
 
 
 @router.post("/", response_model=TransactionResponseSchema, status_code=201)
 def create_transaction(data: TransactionCreateSchema, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    deduct_types = ['transfer', 'withdrawal', 'payment']
+    tx_type = data.transaction_type.lower()
+
+    if tx_type in deduct_types:
+        if current_user.balance < data.amount:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient balance. Your current balance is ${current_user.balance:,.2f}"
+            )
+        current_user.balance -= data.amount
+    elif tx_type == 'deposit':
+        current_user.balance += data.amount
+
     is_fraud = predict_fraud(data.amount, data.transaction_type)
     transaction = Transaction(
         amount=data.amount,
@@ -81,7 +95,6 @@ def get_all_transactions(db: Session = Depends(get_db), _: User = Depends(requir
 
 @router.get("/{transaction_id}/explain")
 def explain_transaction(transaction_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    import pandas as pd
     transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
         Transaction.user_id == current_user.id
@@ -99,23 +112,21 @@ def explain_transaction(transaction_id: int, db: Session = Depends(get_db), curr
         except:
             return {"fraud_probability": 0.0, "reasons": []}
 
-        features = pd.DataFrame([[
-            amount, type_encoded, amount, 0.0, 0.0, 0.0
-        ]], columns=['amount', 'type_encoded', 'oldbalanceOrg', 'newbalanceOrig', 'oldbalanceDest', 'newbalanceDest'])
-
+        features = build_features(amount, type_encoded)
         proba = round(float(model.predict_proba(features)[0][1]), 2)
 
         importances = model.feature_importances_
         feature_names = ['amount', 'type_encoded', 'oldbalanceOrg', 'newbalanceOrig', 'oldbalanceDest', 'newbalanceDest']
         ranked = sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)
 
+        amount_label = "unusually large amount" if amount >= 10000 else "transaction amount"
         explanations = {
-            'newbalanceOrig':  f"Sender's balance dropped to $0 after sending ${amount:,.2f} — full account drain is the strongest fraud signal",
-            'oldbalanceOrg':   f"Sender had exactly ${amount:,.2f} before the transaction — entire balance was moved",
-            'amount':          f"Transaction amount of ${amount:,.2f} is large enough to trigger the fraud model",
-            'type_encoded':    f"Transaction type '{transaction.transaction_type}' is one of the highest-risk types",
-            'oldbalanceDest':  "Receiver's account had $0 before receiving — typical in fraudulent chain transfers",
-            'newbalanceDest':  "Receiver's balance stayed at $0 after transfer — money likely moved immediately",
+            'newbalanceOrig':  f"Sender's balance decreased after sending ${amount:,.2f} — balance movement pattern matched fraud cases",
+            'oldbalanceOrg':   f"Sender's starting balance relative to ${amount:,.2f} raised the risk score",
+            'amount':          f"The {amount_label} of ${amount:,.2f} contributed to the overall fraud score",
+            'type_encoded':    f"Transaction type '{transaction.transaction_type}' is one of the highest-risk categories",
+            'oldbalanceDest':  "Receiver's account balance pattern is similar to known fraud recipient accounts",
+            'newbalanceDest':  "Receiver's balance after the transfer matched patterns seen in fraudulent chains",
         }
 
         for feature, importance in ranked[:3]:

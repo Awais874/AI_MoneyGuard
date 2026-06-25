@@ -14,43 +14,58 @@ export default function Sidebar() {
   }
 
   const links = [
-    { href: '/dashboard', label: '🏠 Dashboard' },
-    { href: '/analytics', label: '📊 Analytics' },
-    ...(role === 'admin' ? [{ href: '/admin', label: '🛡️ Admin Panel' }] : []),
+    { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
+    { href: '/analytics', label: 'Analytics', icon: '📊' },
+    ...(role === 'admin' ? [{ href: '/admin', label: 'Admin Panel', icon: '🛡️' }] : []),
   ]
 
   return (
-    <div className="w-72 min-h-screen bg-teal-950 text-white flex flex-col p-6">
-      
-      <div className="mb-10">
-        <h1 className="text-2xl font-bold text-white">💰 MoneyGuard</h1>
-        <p className="text-teal-300 text-sm mt-1">Fraud Detection</p>
+    <div
+      className="w-64 min-h-screen text-white flex flex-col py-8 px-5 border-r border-slate-700/50 shrink-0"
+      style={{ background: 'linear-gradient(180deg, #0d1b2a 0%, #0f172a 100%)' }}
+    >
+      {/* Logo */}
+      <div className="mb-10 px-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-lg font-extrabold text-black shadow-lg shadow-amber-500/30">
+            M
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white leading-tight">MoneyGuard</h1>
+            <p className="text-xs text-slate-400 mt-0.5">Fraud Detection AI</p>
+          </div>
+        </div>
       </div>
 
-      
-      <nav className="flex flex-col gap-2 flex-1">
+      {/* Navigation */}
+      <nav className="flex flex-col gap-1 flex-1">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3 px-2">Menu</p>
         {links.map(link => (
           <Link
             key={link.href}
             href={link.href}
-            className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
               pathname === link.href
-                ? 'bg-yellow-500 text-black font-bold'
-                : 'text-teal-200 hover:bg-teal-800 hover:text-white'
+                ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
             }`}
           >
+            <span className="text-base">{link.icon}</span>
             {link.label}
           </Link>
         ))}
       </nav>
 
-      
-      <button
-        onClick={handleLogout}
-        className="px-4 py-3 rounded-lg text-red-400 hover:bg-teal-800 hover:text-red-300 text-left font-medium"
-      >
-        🚪 Logout
-      </button>
+      {/* Logout */}
+      <div className="border-t border-slate-700/50 pt-4 mt-4">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-all font-medium"
+        >
+          <span>🚪</span>
+          Logout
+        </button>
+      </div>
     </div>
   )
 }

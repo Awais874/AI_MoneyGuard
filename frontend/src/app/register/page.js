@@ -10,51 +10,103 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleRegister() {
+    setError('')
+    setLoading(true)
     try {
       await api.post('/api/auth/register', { username, email, password })
       router.push('/login')
     } catch (err) {
-      setError('Registration failed. Email may already exist.')
+      setError('Registration failed. Email may already be in use.')
+    } finally {
+      setLoading(false)
     }
   }
 
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') handleRegister()
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-500 text-white">
-      <div className="bg-black-1000 p-8 rounded-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6">Register</h2>
-        {error && <p className="text-red-400 mb-4">{error}</p>}
-        <input
-          type="text"
-          placeholder="Username"
-          className="w-full bg-gray-600 p-3 rounded-lg mb-4 outline-none"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full bg-gray-600 p-3 rounded-lg mb-4 outline-none"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full bg-gray-600 p-3 rounded-lg mb-6 outline-none"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
-        <button
-          onClick={handleRegister}
-          className="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-semibold"
-        >
-          Register
-        </button>
-        <p className="text-gray-400 text-center mt-4">
-          Already have an account? <Link href="/login" className="text-blue-400">Login</Link>
-        </p>
+    <div
+      className="min-h-screen flex items-center justify-center text-white"
+      style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #0f172a 60%, #1a1040 100%)' }}
+    >
+      <div className="w-full max-w-md px-4">
+
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center text-2xl font-extrabold text-black shadow-lg shadow-amber-500/30 mb-4">
+            M
+          </div>
+          <h1 className="text-2xl font-bold text-white">MoneyGuard</h1>
+          <p className="text-slate-400 text-sm mt-1">Fraud Detection AI</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+          <h2 className="text-xl font-bold text-white mb-1">Create account</h2>
+          <p className="text-slate-400 text-sm mb-6">Start protecting your transactions</p>
+
+          {error && (
+            <div className="bg-rose-900/40 border border-rose-700/50 text-rose-300 text-sm px-4 py-3 rounded-xl mb-5">
+              {error}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5 block">Username</label>
+              <input
+                type="text"
+                placeholder="Your name"
+                className="w-full bg-slate-900 border border-slate-700 text-white placeholder-slate-500 p-3 rounded-xl outline-none focus:border-amber-500 transition-colors"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5 block">Email</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                className="w-full bg-slate-900 border border-slate-700 text-white placeholder-slate-500 p-3 rounded-xl outline-none focus:border-amber-500 transition-colors"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5 block">Password</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                className="w-full bg-slate-900 border border-slate-700 text-white placeholder-slate-500 p-3 rounded-xl outline-none focus:border-amber-500 transition-colors"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleRegister}
+            disabled={loading}
+            className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold p-3 rounded-xl mt-6 transition-colors shadow-lg shadow-amber-500/20"
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
+          </button>
+
+          <p className="text-slate-400 text-sm text-center mt-5">
+            Already have an account?{' '}
+            <Link href="/login" className="text-amber-400 hover:text-amber-300 font-medium">
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )

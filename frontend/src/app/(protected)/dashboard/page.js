@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 export default function Dashboard() {
   const router = useRouter()
   const [transactions, setTransactions] = useState([])
+  const [balance, setBalance] = useState(null)
   const [error, setError] = useState('')
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('transfer')
@@ -14,12 +15,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
+    if (!token) { router.push('/login'); return }
     fetchTransactions(token)
+    fetchBalance(token)
   }, [])
+
+  async function fetchBalance(token) {
+    try {
+      const res = await api.get('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setBalance(res.data.balance)
+    } catch (err) {}
+  }
 
   async function fetchTransactions(token) {
     try {
@@ -34,6 +42,7 @@ export default function Dashboard() {
 
   async function handleAddTransaction() {
     const token = localStorage.getItem('token')
+    setError('')
     try {
       await api.post('/api/transactions/',
         { amount: parseFloat(amount), transaction_type: type },
@@ -41,8 +50,10 @@ export default function Dashboard() {
       )
       setAmount('')
       fetchTransactions(token)
+      fetchBalance(token)
     } catch (err) {
-      setError('Failed to add transaction')
+      const msg = err.response?.data?.detail || 'Failed to add transaction'
+      setError(msg)
     }
   }
 
@@ -68,45 +79,56 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white">Dashboard</h2>
+        <p className="text-slate-400 text-sm mt-1">Monitor and manage your transactions</p>
+      </div>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      {error && (
+        <div className="bg-rose-900/40 border border-rose-700/50 text-rose-300 text-sm px-4 py-3 rounded-xl mb-6">
+          {error}
+        </div>
+      )}
 
-      
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-gray-700 p-6 rounded-xl text-center">
-          <p className="text-gray-400 mb-1">Total Transactions</p>
-          <p className="text-3xl font-bold">{totalTransactions}</p>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-4 gap-5 mb-8">
+        <div className="bg-linear-to-br from-amber-900/60 to-amber-800/20 border border-amber-700/40 p-6 rounded-2xl">
+          <p className="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-2">Account Balance</p>
+          <p className="text-3xl font-bold text-white">
+            {balance !== null ? `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+          </p>
         </div>
-        <div className="bg-green-700 p-6 rounded-xl text-center">
-          <p className="text-gray-200 mb-1">Clean</p>
-          <p className="text-3xl font-bold">{totalClean}</p>
+        <div className="bg-slate-800 border border-slate-700/60 p-6 rounded-2xl">
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Transactions</p>
+          <p className="text-3xl font-bold text-white">{totalTransactions}</p>
         </div>
-        <div className="bg-red-700 p-6 rounded-xl text-center">
-          <p className="text-gray-200 mb-1">Fraud</p>
-          <p className="text-3xl font-bold">{totalFraud}</p>
+        <div className="bg-linear-to-br from-emerald-900/70 to-emerald-800/30 border border-emerald-700/40 p-6 rounded-2xl">
+          <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wide mb-2">Clean</p>
+          <p className="text-3xl font-bold text-white">{totalClean}</p>
+        </div>
+        <div className="bg-linear-to-br from-rose-900/70 to-red-800/30 border border-rose-700/40 p-6 rounded-2xl">
+          <p className="text-rose-400 text-xs font-semibold uppercase tracking-wide mb-2">Fraud</p>
+          <p className="text-3xl font-bold text-white">{totalFraud}</p>
         </div>
       </div>
 
-    
-      <div className="bg-gray-700 rounded-xl p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Add Transaction</h2>
-        <div className="flex gap-4">
+      {/* Add Transaction */}
+      <div className="bg-slate-800 border border-slate-700/60 rounded-2xl p-6 mb-6">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">Add Transaction</h3>
+        <div className="flex gap-3">
           <input
             type="text"
             inputMode="numeric"
             placeholder="$ Amount"
-            className="bg-gray-600 p-3 rounded-lg outline-none flex-1"
+            className="bg-slate-900 border border-slate-700 text-white placeholder-slate-500 p-3 rounded-xl outline-none flex-1 focus:border-amber-500 transition-colors"
             value={amount ? `$${amount}` : ''}
             onChange={e => {
               const val = e.target.value.replace('$', '')
-              if (val === '' || (/^\d*\.?\d*$/.test(val))) {
-                setAmount(val)
-              }
+              if (val === '' || /^\d*\.?\d*$/.test(val)) setAmount(val)
             }}
           />
           <select
-            className="bg-gray-600 p-3 rounded-lg outline-none"
+            className="bg-slate-900 border border-slate-700 text-white p-3 rounded-xl outline-none focus:border-amber-500 transition-colors"
             value={type}
             onChange={e => setType(e.target.value)}
           >
@@ -117,19 +139,19 @@ export default function Dashboard() {
           </select>
           <button
             onClick={handleAddTransaction}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-3 rounded-lg font-semibold"
+            className="bg-amber-500 hover:bg-amber-400 text-black px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-amber-500/20"
           >
             Add
           </button>
         </div>
       </div>
 
-      
-      <div className="bg-gray-700 rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-4">Transaction Feed</h2>
+      {/* Transaction Table */}
+      <div className="bg-slate-800 border border-slate-700/60 rounded-2xl p-6">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-5">Transaction Feed</h3>
         <table className="w-full text-left">
           <thead>
-            <tr className="text-gray-400 border-b border-gray-600">
+            <tr className="text-slate-400 text-xs uppercase tracking-wide border-b border-slate-700">
               <th className="pb-3">ID</th>
               <th className="pb-3">Amount</th>
               <th className="pb-3">Type</th>
@@ -139,59 +161,70 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {transactions.map(tx => (
-              <tr key={tx.id} className="border-b border-gray-600 hover:bg-gray-600">
-                <td className="py-3">{tx.id}</td>
-                <td className="py-3">${tx.amount.toLocaleString()}</td>
-                <td className="py-3 capitalize">{tx.transaction_type}</td>
+              <tr key={tx.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                <td className="py-3 text-slate-400 text-sm">#{tx.id}</td>
+                <td className="py-3 font-medium">${tx.amount.toLocaleString()}</td>
+                <td className="py-3 capitalize text-slate-300 text-sm">{tx.transaction_type}</td>
                 <td className="py-3">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${tx.is_fraud ? 'bg-red-500' : 'bg-green-500'}`}>
-                    {tx.is_fraud ? 'Fraud' : 'Clean'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tx.is_fraud ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                    {tx.is_fraud ? '⚠ Fraud' : '✓ Clean'}
                   </span>
                   {tx.is_fraud && (
                     <button
                       onClick={() => handleExplain(tx.id)}
-                      className="ml-2 text-xs text-yellow-400 hover:text-yellow-300 underline"
+                      className="ml-2 text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors"
                     >
                       Why?
                     </button>
                   )}
                 </td>
-                <td className="py-3">{new Date(tx.created_at).toLocaleDateString()}</td>
+                <td className="py-3 text-slate-400 text-sm">{new Date(tx.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {transactions.length === 0 && <p className="text-gray-400 text-center mt-4">No transactions yet.</p>}
+        {transactions.length === 0 && (
+          <p className="text-slate-500 text-center mt-8 text-sm">No transactions yet. Add one above.</p>
+        )}
       </div>
 
+      {/* Loading overlay */}
       {loadingExplain && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <p className="text-white text-lg">Analyzing transaction...</p>
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl px-8 py-6 text-center">
+            <div className="text-amber-400 text-2xl mb-2">⏳</div>
+            <p className="text-white text-sm">Analyzing transaction...</p>
+          </div>
         </div>
       )}
 
+      {/* Explain Modal */}
       {explanation && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-8 w-full max-w-lg">
-            <h3 className="text-xl font-bold mb-2">Why was this flagged?</h3>
-            <p className="text-gray-400 mb-1">Transaction #{explanation.transaction_id} — ${explanation.amount.toLocaleString()} ({explanation.transaction_type})</p>
-            <p className="text-red-400 font-semibold mb-6">Fraud Probability: {(explanation.fraud_probability * 100).toFixed(0)}%</p>
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-1">Why was this flagged?</h3>
+            <p className="text-slate-400 text-sm mb-1">
+              Transaction #{explanation.transaction_id} — ${explanation.amount.toLocaleString()} ({explanation.transaction_type})
+            </p>
+            <div className="inline-block bg-rose-500/20 border border-rose-500/30 text-rose-300 text-sm font-semibold px-3 py-1 rounded-full mb-6">
+              Fraud Probability: {(explanation.fraud_probability * 100).toFixed(0)}%
+            </div>
 
-            <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-col gap-3 mb-6">
               {explanation.reasons.map((r, i) => (
-                <div key={i} className="bg-gray-700 p-4 rounded-lg">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-yellow-400 font-semibold text-sm">{r.feature}</span>
-                    <span className="text-gray-400 text-sm">Impact: {(r.importance * 100).toFixed(1)}%</span>
+                <div key={i} className="bg-slate-900/60 border border-slate-700/50 p-4 rounded-xl">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-amber-400 font-semibold text-sm">{r.feature}</span>
+                    <span className="text-slate-400 text-xs">Impact: {(r.importance * 100).toFixed(1)}%</span>
                   </div>
-                  <p className="text-gray-200 text-sm">{r.explanation}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed">{r.explanation}</p>
                 </div>
               ))}
             </div>
 
             <button
               onClick={() => setExplanation(null)}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-2 rounded-lg font-semibold"
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl font-semibold transition-colors"
             >
               Close
             </button>

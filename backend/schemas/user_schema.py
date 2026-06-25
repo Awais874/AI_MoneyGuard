@@ -18,6 +18,7 @@ class UserResponseSchema(BaseModel):
     username: str
     email: EmailStr
     role: str
+    balance: float
 
     class Config:
         from_attributes = True
